@@ -18,7 +18,9 @@ let currentState = {
     selectedColor: 0,
     isDragging: false,
     puzzleIds: [],  // Will store all available puzzle IDs
-    currentPuzzleIndex: 0  // Track current position in puzzleIds array
+    currentPuzzleIndex: 0,  // Track current position in puzzleIds array
+    isStampMode: false,
+    stampPreview: null
 };
 
 // DOM Elements
@@ -39,7 +41,8 @@ const elements = {
     copyInput: document.getElementById('copyInput'),
     clearGrid: document.getElementById('clearGrid'),
     submit: document.getElementById('submit'),
-    showAnswer: document.getElementById('showAnswer')
+    showAnswer: document.getElementById('showAnswer'),
+    stamp: document.getElementById('stamp')
 };
 
 // Tab switching
@@ -172,7 +175,10 @@ function setupDrawing() {
     });
 
     testOutput.addEventListener('mousemove', (e) => {
-        if (currentState.isDragging && e.target.classList.contains('grid-cell')) {
+        if (currentState.isStampMode) {
+            createStampPreview();
+            updateStampPreviewPosition(e, testOutput);
+        } else if (currentState.isDragging && e.target.classList.contains('grid-cell')) {
             handleCellInteraction(e.target);
         }
     });
@@ -204,6 +210,39 @@ function setupDrawing() {
 
     testOutput.addEventListener('touchend', () => {
         currentState.isDragging = false;
+    });
+
+    testOutput.addEventListener('mouseleave', () => {
+        if (currentState.stampPreview) {
+            currentState.stampPreview.style.display = 'none';
+        }
+    });
+
+    testOutput.addEventListener('click', (e) => {
+        if (!currentState.isStampMode) return;
+        
+        const pos = updateStampPreviewPosition(e, testOutput);
+        if (!pos) return;
+        
+        // Get input grid data
+        const inputData = getCurrentGridData(elements.testInput);
+        const outputRows = testOutput.querySelectorAll('.grid-row');
+        
+        // Apply stamp at calculated position
+        inputData.forEach((rowData, i) => {
+            const targetY = pos.gridY + i;
+            if (targetY < 0 || targetY >= outputRows.length) return;
+            
+            const outputCells = outputRows[targetY].querySelectorAll('.grid-cell');
+            rowData.forEach((value, j) => {
+                const targetX = pos.gridX + j;
+                if (targetX < 0 || targetX >= outputCells.length) return;
+                
+                const cell = outputCells[targetX];
+                cell.style.backgroundColor = COLORS[value];
+                cell.dataset.value = value;
+            });
+        });
     });
 }
 
@@ -291,21 +330,45 @@ elements.submit.addEventListener('click', () => {
 // Example navigation
 elements.prevExample.addEventListener('click', () => {
     if (!currentState.currentPuzzle) return;
-    currentState.currentExample = (currentState.currentExample - 1 + currentState.currentPuzzle.train.length) % currentState.currentPuzzle.train.length;
+    
+    const totalExamples = currentState.currentPuzzle.train.length;
+    currentState.currentExample = 
+        (currentState.currentExample - 1 + totalExamples) % totalExamples;
+    
+    console.log('Previous clicked, new index:', currentState.currentExample); // Debug log
     updateExampleDisplay();
 });
 
 elements.nextExample.addEventListener('click', () => {
     if (!currentState.currentPuzzle) return;
-    currentState.currentExample = (currentState.currentExample + 1) % currentState.currentPuzzle.train.length;
+    
+    const totalExamples = currentState.currentPuzzle.train.length;
+    currentState.currentExample = 
+        (currentState.currentExample + 1) % totalExamples;
+    
+    console.log('Next clicked, new index:', currentState.currentExample); // Debug log
     updateExampleDisplay();
 });
 
 function updateExampleDisplay() {
     const example = currentState.currentPuzzle.train[currentState.currentExample];
+    
+    // First recreate the grids with correct dimensions
+    createGrid(elements.exampleInput, example.input.length, example.input[0].length);
+    createGrid(elements.exampleOutput, example.output.length, example.output[0].length);
+    
+    // Then update the grid contents
     updateGrid(elements.exampleInput, example.input);
     updateGrid(elements.exampleOutput, example.output);
-    elements.exampleNumber.textContent = `Example ${currentState.currentExample + 1}/${currentState.currentPuzzle.train.length}`;
+    
+    // Update example counter
+    elements.exampleNumber.textContent = 
+        `Example ${currentState.currentExample + 1}/${currentState.currentPuzzle.train.length}`;
+    
+    // Log for debugging
+    console.log('Updating to example:', currentState.currentExample);
+    console.log('Input:', example.input);
+    console.log('Output:', example.output);
 }
 
 // Add navigation functions
@@ -408,3 +471,99 @@ elements.showAnswer.addEventListener('click', () => {
         });
     });
 });
+
+// Add stamp mode toggle
+elements.stamp.addEventListener('click', () => {
+    currentState.isStampMode = !currentState.isStampMode;
+    elements.stamp.classList.toggle('active');
+    
+    if (!currentState.isStampMode) {
+        removeStampPreview();
+    }
+});
+
+function createStampPreview() {
+    if (currentState.stampPreview) return;
+    
+    const preview = document.createElement('div');
+    preview.className = 'stamp-preview';
+    preview.style.position = 'absolute';
+    preview.style.pointerEvents = 'none';
+    preview.style.opacity = '0.7';
+    preview.style.display = 'none';
+    document.body.appendChild(preview);
+    
+    // Create grid inside preview
+    const inputGrid = elements.testInput;
+    const rows = inputGrid.querySelectorAll('.grid-row');
+    rows.forEach(row => {
+        const previewRow = document.createElement('div');
+        previewRow.className = 'grid-row';
+        row.querySelectorAll('.grid-cell').forEach(cell => {
+            const previewCell = document.createElement('div');
+            previewCell.className = 'grid-cell';
+            previewCell.style.backgroundColor = cell.style.backgroundColor;
+            previewCell.style.width = cell.style.width;
+            previewCell.style.height = cell.style.height;
+            previewRow.appendChild(previewCell);
+        });
+        preview.appendChild(previewRow);
+    });
+    
+    currentState.stampPreview = preview;
+}
+
+function removeStampPreview() {
+    if (currentState.stampPreview) {
+        currentState.stampPreview.remove();
+        currentState.stampPreview = null;
+    }
+}
+
+function updateStampPreviewPosition(e, outputGrid) {
+    if (!currentState.stampPreview) return;
+    
+    const rect = outputGrid.getBoundingClientRect();
+    const cellSize = parseInt(outputGrid.querySelector('.grid-cell').style.width);
+    const previewWidth = currentState.stampPreview.offsetWidth;
+    const previewHeight = currentState.stampPreview.offsetHeight;
+    
+    // Calculate grid position, accounting for the center of the preview
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Adjust mouse position to account for preview center
+    const adjustedX = mouseX - (previewWidth / 2);
+    const adjustedY = mouseY - (previewHeight / 2);
+    
+    // Calculate grid position based on adjusted coordinates
+    const gridX = Math.floor(adjustedX / cellSize);
+    const gridY = Math.floor(adjustedY / cellSize);
+    
+    // Calculate snapped position in pixels
+    const snappedX = (gridX * cellSize) + rect.left;
+    const snappedY = (gridY * cellSize) + rect.top;
+    
+    // Position preview at snapped coordinates
+    currentState.stampPreview.style.left = `${snappedX}px`;
+    currentState.stampPreview.style.top = `${snappedY}px`;
+    currentState.stampPreview.style.display = 'block';
+    
+    return {
+        gridX: gridX,
+        gridY: gridY
+    };
+}
+
+// Add some CSS for the stamp preview
+const style = document.createElement('style');
+style.textContent = `
+    .stamp-preview {
+        z-index: 1000;
+        pointer-events: none;
+    }
+    #stamp.active {
+        background-color: #005cbf;
+    }
+`;
+document.head.appendChild(style);
