@@ -16,7 +16,9 @@ let currentState = {
     currentPuzzle: null,
     currentExample: 0,
     selectedColor: 0,
-    isDragging: false
+    isDragging: false,
+    puzzleIds: [],  // Will store all available puzzle IDs
+    currentPuzzleIndex: 0  // Track current position in puzzleIds array
 };
 
 // DOM Elements
@@ -155,6 +157,9 @@ async function loadPuzzle(puzzleId) {
         const puzzle = await response.json();
         currentState.currentPuzzle = puzzle;
         
+        // Update current index
+        currentState.currentPuzzleIndex = currentState.puzzleIds.indexOf(puzzleId);
+        
         // Update puzzle ID display
         elements.puzzleId.textContent = `Puzzle ID: ${puzzleId}`;
         
@@ -273,11 +278,60 @@ function updateExampleDisplay() {
     elements.exampleNumber.textContent = `Example ${currentState.currentExample + 1}/${currentState.currentPuzzle.train.length}`;
 }
 
+// Add navigation functions
+function getNextPuzzleId(currentId) {
+    // Simple increment of the hex number
+    const nextNum = parseInt(currentId, 16) + 1;
+    return nextNum.toString(16).padStart(8, '0');
+}
+
+function getPrevPuzzleId(currentId) {
+    // Simple decrement of the hex number
+    const prevNum = Math.max(0, parseInt(currentId, 16) - 1);
+    return prevNum.toString(16).padStart(8, '0');
+}
+
+// Update button handlers
+elements.prevPuzzle.addEventListener('click', () => navigatePuzzle(-1));
+elements.nextPuzzle.addEventListener('click', () => navigatePuzzle(1));
+
+// Handle URL hash changes
+window.addEventListener('hashchange', () => {
+    const puzzleId = window.location.hash.slice(1) || '007bbfb7';
+    loadPuzzle(puzzleId);
+});
+
+// Add function to load puzzle list
+async function loadPuzzleList() {
+    try {
+        const response = await fetch('list_puzzles.php');
+        const data = await response.json();
+        currentState.puzzleIds = data.puzzles;
+        
+        if (data.puzzles.length > 0) {
+            await loadPuzzle(data.puzzles[0]);
+        }
+    } catch (error) {
+        console.error('Error loading puzzle list:', error);
+    }
+}
+
+// Update navigation functions
+async function navigatePuzzle(direction) {
+    if (currentState.puzzleIds.length === 0) return;
+    
+    currentState.currentPuzzleIndex = 
+        (currentState.currentPuzzleIndex + direction + currentState.puzzleIds.length) 
+        % currentState.puzzleIds.length;
+    
+    await loadPuzzle(currentState.puzzleIds[currentState.currentPuzzleIndex]);
+}
+
 // Initialize
-function init() {
+async function init() {
     setupColorPalette();
     setupDrawing();
-    loadPuzzle('007bbfb7');
+    await loadPuzzleList();
 }
 
 init(); 
