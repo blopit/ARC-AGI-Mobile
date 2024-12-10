@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARC AGI Tests</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="examples">Examples</button>
+            <button class="tab-btn" data-tab="test">Test</button>
+        </nav>
+
+        <div class="navigation">
+            <button id="prevPuzzle">Previous</button>
+            <span id="puzzleId">Puzzle ID: ---</span>
+            <button id="nextPuzzle">Next</button>
+        </div>
+
+        <div class="tab-content active" id="examples">
+            <div class="example-navigation">
+                <button id="prevExample">←</button>
+                <span id="exampleNumber">Example 1/5</span>
+                <button id="nextExample">→</button>
+            </div>
+            <div class="example-display">
+                <div class="grid-container">
+                    <h3>Input:</h3>
+                    <div id="exampleInput" class="grid"></div>
+                </div>
+                <div class="grid-container">
+                    <h3>Output:</h3>
+                    <div id="exampleOutput" class="grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="test">
+            <div class="grid-container">
+                <h3>Input:</h3>
+                <div id="testInput" class="grid"></div>
+            </div>
+            <div class="grid-container">
+                <h3>Your Solution:</h3>
+                <div id="testOutput" class="grid"></div>
+            </div>
+            <div class="controls">
+                <div class="color-palette"></div>
+                <div class="buttons">
+                    <button id="copyInput">Copy Input</button>
+                    <button id="clearGrid">Clear Grid</button>
+                    <button id="submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,154 @@
+:root {
+    --color-0: #000000;  /* black */
+    --color-1: #0000ff;  /* blue */
+    --color-2: #ff0000;  /* red */
+    --color-3: #00ff00;  /* green */
+    --color-4: #ffff00;  /* yellow */
+    --color-5: #808080;  /* grey */
+    --color-6: #ff69b4;  /* pink */
+    --color-7: #ffa500;  /* orange */
+    --color-8: #00ffff;  /* cyan */
+    --color-9: #a52a2a;  /* brown */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background: #ddd;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    background: white;
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.grid {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    background: none;
+    border: 1px solid #ccc;
+    touch-action: none;
+    padding: 0;
+    margin: 0;
+}
+
+.grid-row {
+    display: flex;
+    gap: 0;
+}
+
+.grid-cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    background-color: #000000;
+}
+
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.color-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.color-btn.active {
+    border-color: #000;
+}
+
+.buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.buttons button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+.example-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.grid-container {
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 480px) {
+    .grid-cell {
+        width: 25px;
+        height: 25px;
+        border-width: 1px;
+    }
+    
+    .color-btn {
+        width: 30px;
+        height: 30px;
+    }
+} 
